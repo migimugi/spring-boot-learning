@@ -1,0 +1,15 @@
+package com.example.spring_boot_learning.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+public record CreateTodoRequest(
+    
+    @NotBlank(message = "タイトルは必須です")
+    @Size(
+        max = 100,
+        message = "タイトルは100文字以内で入力してください"
+    )
+    String title
+) {
+}
