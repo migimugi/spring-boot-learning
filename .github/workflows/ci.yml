@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,5 +24,8 @@ jobs:
           java-version: "21"
           cache: maven
 
-      - name: Run tests
-        run: ./mvnw test
+      - name: Build and test JAR
+        run: ./mvnw package
+
+      - name: Build Docker image
+        run: docker build -t spring-boot-learning .
