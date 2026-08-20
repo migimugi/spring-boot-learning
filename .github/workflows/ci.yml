@@ -10,6 +10,10 @@ permissions:
   contents: read
   id-token: write
 
+env:
+  AWS_REGION: ap-northeast-1
+  ECR_REPOSITORY: spring-boot-learning
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -31,20 +35,37 @@ jobs:
       - name: Build Docker image
         run: docker build -t spring-boot-learning .
 
-      - name: Show GitHub repository identity
-        if: github.event_name == 'push'
-        run: |
-          echo "repository=${{ github.repository }}"
-          echo "repository_owner_id=${{ github.repository_owner_id }}"
-          echo "repository_id=${{ github.repository_id }}"
-
       - name: Configure AWS credentials
         if: github.event_name == 'push'
         uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region: ap-northeast-1
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Verify AWS identity
         if: github.event_name == 'push'
         run: aws sts get-caller-identity
+
+      - name: Login to Amazon ECR
+        if: github.event_name == 'push'
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up QEMU
+        if: github.event_name == 'push'
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        if: github.event_name == 'push'
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push ARM64 image to Amazon ECR
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
