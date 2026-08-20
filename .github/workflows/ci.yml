@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -13,6 +13,10 @@ permissions:
 env:
   AWS_REGION: ap-northeast-1
   ECR_REPOSITORY: spring-boot-learning
+  ECS_CLUSTER: spring-boot-learning-cluster
+  ECS_SERVICE: spring-boot-learning-service
+  ECS_TASK_DEFINITION: spring-boot-learning
+  CONTAINER_NAME: spring-boot-learning
 
 jobs:
   build:
@@ -69,3 +73,31 @@ jobs:
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+    
+      - name: Download current ECS task definition
+        if: github.event_name == 'push'
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition "$ECS_TASK_DEFINITION" \
+            --query taskDefinition \
+            --output json \
+            --no-cli-pager > task-definition.json
+
+      - name: Insert new image into ECS task definition
+        if: github.event_name == 'push'
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: Deploy to Amazon ECS
+        if: github.event_name == 'push'
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          service: ${{ env.ECS_SERVICE }}
+          wait-for-service-stability: true
+          wait-max-delay-seconds: 15
