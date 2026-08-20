@@ -30,7 +30,14 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t spring-boot-learning .
-        
+
+      - name: Show GitHub repository identity
+        if: github.event_name == 'push'
+        run: |
+          echo "repository=${{ github.repository }}"
+          echo "repository_owner_id=${{ github.repository_owner_id }}"
+          echo "repository_id=${{ github.repository_id }}"
+
       - name: Configure AWS credentials
         if: github.event_name == 'push'
         uses: aws-actions/configure-aws-credentials@v6
