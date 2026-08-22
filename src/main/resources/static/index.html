@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo管理</title>
+    <script src="/app.js" defer></script>
+</head>
+<body>
+    <h1>Todo管理</h1>
+
+    <form id="todo-form">
+        <input
+            id="todo-title"
+            type="text"
+            maxlength="100"
+            placeholder="新しいTodo"
+            required
+        >
+        <button type="submit">追加</button>
+    </form>
+
+    <p id="message"></p>
+
+    <ul id="todo-list"></ul>
+</body>
+</html>
